@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content, initial-scale=1.0">
+    <title>Кликер - Симулятор Олигарха</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        #container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+        }
+        #clicker-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #coin-count {
+            font-size: 24px;
+            margin: 20px;
+        }
+        #upgrades, #businesses {
+            margin-top: 30px;
+        }
+        .upgrade-button, .business-button {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .upgrade-button:disabled, .business-button:disabled {
+            background-color: #b0bec5;
+            cursor: not-allowed;
+        }
+        .upgrade-info, .business-info {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Симулятор Олигарха</h1>
+        <div id="coin-count">Монетки: 0</div>
+        <button id="clicker-button">Кликни меня!</button>
+
+        <div id="upgrades">
+            <h2>Улучшения</h2>
+            <div class="upgrade-info">
+                <span>Улучшение 1 (Цена: 10 монет): +1 монета за клик</span>
+                <button id="upgrade1" class="upgrade-button">Купить</button>
+            </div>
+            <div class="upgrade-info">
+                <span>Улучшение 2 (Цена: 50 монет): +5 монет за клик</span>
+                <button id="upgrade2" class="upgrade-button">Купить</button>
+            </div>
+            <div class="upgrade-info">
+                <span>Улучшение 3 (Цена: 100 монет): +10 монет за клик</span>
+                <button id="upgrade3" class="upgrade-button">Купить</button>
+            </div>
+        </div>
+
+        <div id="businesses">
+            <h2>Бизнесы</h2>
+            <div class="business-info">
+                <span>Бизнес 1 (Цена: 200 монет): +10 монет в час</span>
+                <button id="business1" class="business-button">Купить</button>
+            </div>
+            <div class="business-info">
+                <span>Бизнес 2 (Цена: 500 монет): +30 монет в час</span>
+                <button id="business2" class="business-button">Купить</button>
+            </div>
+            <div class="business-info">
+                <span>Бизнес 3 (Цена: 1000 монет): +60 монет в час</span>
+                <button id="business3" class="business-button">Купить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация переменных
+        let coinCount = parseInt(localStorage.getItem('coinCount')) || 0;
+        let coinsPerClick = parseInt(localStorage.getItem('coinsPerClick')) || 1;
+        let businesses = JSON.parse(localStorage.getItem('businesses')) || { 1: 0, 2: 0, 3: 0 };
+        let hourlyIncome = 0;
+
+        const coinCountElement = document.getElementById('coin-count');
+        const clickerButton = document.getElementById('clicker-button');
+        const upgrade1Button = document.getElementById('upgrade1');
+        const upgrade2Button = document.getElementById('upgrade2');
+        const upgrade3Button = document.getElementById('upgrade3');
+        const business1Button = document.getElementById('business1');
+        const business2Button = document.getElementById('business2');
+        const business3Button = document.getElementById('business3');
+
+        function updateDisplay() {
+            coinCountElement.textContent = `Монетки: ${coinCount}`;
+            upgrade1Button.disabled = coinCount < 10;
+            upgrade2Button.disabled = coinCount < 50;
+            upgrade3Button.disabled = coinCount < 100;
+            business1Button.disabled = coinCount < 200;
+            business2Button.disabled = coinCount < 500;
+            business3Button.disabled = coinCount < 1000;
+        }
+
+        function handleClick() {
+            coinCount += coinsPerClick;
+            updateDisplay();
+            saveData();
+        }
+
+        function buyUpgrade(cost, additionalCoins) {
+            if (coinCount >= cost) {
+                coinCount -= cost;
+                coinsPerClick += additionalCoins;
+                updateDisplay();
+                saveData();
+            }
+        }
+
+        function buyBusiness(businessId, cost, income) {
+            if (coinCount >= cost) {
+                coinCount -= cost;
+                businesses[businessId]++;
+                hourlyIncome += income;
+                updateDisplay();
+                saveData();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('coinCount', coinCount);
+            localStorage.setItem('coinsPerClick', coinsPerClick);
+            localStorage.setItem('businesses', JSON.stringify(businesses));
+        }
+
+        function updateBusinessIncome() {
+            coinCount += hourlyIncome;
+            updateDisplay();
+            saveData();
+        }
+
+        // Обработчики событий
+        clickerButton.addEventListener('click', handleClick);
+        upgrade1Button.addEventListener('click', () => buyUpgrade(10, 1));
+        upgrade2Button.addEventListener('click', () => buyUpgrade(50, 5));
+        upgrade3Button.addEventListener('click', () => buyUpgrade(100, 10));
+        business1Button.addEventListener('click', () => buyBusiness(1, 200, 10));
+        business2Button.addEventListener('click', () => buyBusiness(2, 500, 30));
+        business3Button.addEventListener('click', () => buyBusiness(3, 1000, 60));
+
+        // Запуск интервала для обновления дохода от бизнесов
+        setInterval(updateBusinessIncome, 3600000); // Каждые 3600000 мс = 1 час
+
+        updateDisplay();
+    </script>
+</body>
+</html>
